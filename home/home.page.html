@@ -1,0 +1,406 @@
+<ion-header>
+  <ion-toolbar color="{{ apiConectada ? 'primary' : 'danger'}}" class="ion-text-center">
+
+      <ion-buttons slot="start" *ngIf="authService.loggeado">
+          <ion-button color="dark">
+            <ion-icon slot="start" name="person"></ion-icon>
+            {{ authService.nombreVendedora }}
+          </ion-button>
+        </ion-buttons>
+        
+    <ion-title>
+      Almacenes Universal S.A.S.
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="dark" (click)="test()">
+        <ion-icon slot="icon-only" name="refresh"></ion-icon>
+      </ion-button>
+      <ion-button color="dark" (click)="reset()">
+        <ion-icon slot="icon-only" name="trash"></ion-icon>
+      </ion-button>
+      <!-- <ion-button *ngIf="!servicio" color="dark" (click)="servicio = !servicio">
+        <ion-icon slot="icon-only" name="construct"></ion-icon>
+      </ion-button>
+      <ion-button *ngIf="servicio" color="dark" (click)="servicio = !servicio">
+        <ion-icon slot="icon-only" name="cart"></ion-icon>
+      </ion-button> -->
+      <ion-button color="dark" (click)="modificarUrl = !modificarUrl">
+        <ion-icon slot="icon-only" name="settings"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="ion-padding">
+
+
+    <ion-grid *ngIf="!authService.loggeado">
+      <ion-row>
+        <ion-col>
+            <ion-item>
+                <ion-label position="floating">ID</ion-label>
+                <ion-input type="number" [(ngModel)]="loginID" name="loginID"></ion-input>
+              </ion-item>
+
+              <ion-item>
+                  <ion-label position="floating">Contraseña</ion-label>
+                  <ion-input type="password" [(ngModel)]="loginPass" name="loginPass"></ion-input>
+                </ion-item>
+
+                <ion-item>
+                    <ion-button expand="block" color="success" size="large" (click)="login()">Entrar</ion-button>
+                </ion-item>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <ion-grid>
+      <ion-row *ngIf="modificarUrl">
+        <ion-col>
+          <ion-input [(ngModel)]="apiProvider.urlApi"></ion-input>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" color="primary" (click)="modificarUrl = !modificarUrl">Modificar</ion-button>
+        </ion-col>
+        <!-- <ion-col>
+            <ion-button expand="block" color="danger" (click)="modificarUrl = !modificarUrl">Cancelar</ion-button>
+        </ion-col> -->
+      </ion-row>
+    </ion-grid>
+
+
+    <ion-grid *ngIf="authService.loggeado">
+      <!-- <ion-row *ngIf="modificarUrl">
+        <ion-col>
+          <ion-input [(ngModel)]="apiProvider.urlApi"></ion-input>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" color="primary" (click)="modificarUrl = !modificarUrl">Modificar</ion-button>
+        </ion-col>
+        <ion-col>
+            <ion-button expand="block" color="danger" (click)="modificarUrl = !modificarUrl">Cancelar</ion-button>
+        </ion-col>
+      </ion-row> -->
+
+      <ion-row *ngIf="!clienteElegido">
+        <ion-col>
+          <ion-button expand="block" color="primary" size="large" (click)="guardarOrden()">TEST AUTENTICACIÓN</ion-button>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="!clienteElegido">
+        <ion-col size="2"></ion-col>
+        <ion-col size="4">
+          <ion-button expand="block" color="primary" size="large" (click)="elegirClienteOcasional()">Cliente Ocasional</ion-button>
+        </ion-col>
+        <ion-col size="4">
+          <ion-button expand="block" color="success" size="large" (click)="clienteElegido = true">Otro Cliente</ion-button>
+        </ion-col>
+        <ion-col size="2"></ion-col>
+      </ion-row>
+
+
+      <ion-row *ngIf="clienteElegido && !(mostrarFormulario || clienteEncontrado)">
+        <ion-col size="5">
+          <ion-item>
+            <ion-label position="floating">Número de Identificación</ion-label>
+            <ion-input type="number" [(ngModel)]="numeroIdentificacion" (ionChange)="calcularDV()"></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col size="5">
+          <ion-item>
+            <ion-label position="floating">Dígito de Verificación</ion-label>
+            <ion-input type="number" readonly [(ngModel)]="digitoVerificacion"></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col size="2">
+          <ion-button expand="block" (click)="buscarCliente()">Buscar</ion-button>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="mostrarFormulario">
+        <ion-col size="2"></ion-col>
+        <ion-col size="8">
+
+          <ion-item>
+            <ion-label>Tipo de Identificación</ion-label>
+            <ion-select placeholder="Elegir" [(ngModel)]="tipoIdentificacion">
+              <ion-select-option value="cc">Cédula</ion-select-option>
+              <ion-select-option value="nit">NIT</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item *ngIf="tipoIdentificacion === 'cc'">
+            <ion-label position="floating">Primer Nombre</ion-label>
+            <ion-input [(ngModel)]="primerNombre"></ion-input>
+          </ion-item>
+
+          <ion-item *ngIf="tipoIdentificacion === 'cc'">
+            <ion-label position="floating">Segundo Nombre</ion-label>
+            <ion-input [(ngModel)]="segundoNombre"></ion-input>
+          </ion-item>
+
+          <ion-item *ngIf="tipoIdentificacion === 'cc'">
+            <ion-label position="floating">Apellidos</ion-label>
+            <ion-input [(ngModel)]="apellidos"></ion-input>
+          </ion-item>
+
+          <ion-item *ngIf="tipoIdentificacion === 'cc'">
+            <ion-label position="floating">Nombre Comercial</ion-label>
+            <ion-input [(ngModel)]="nombreComercial"></ion-input>
+          </ion-item>
+
+          <ion-item *ngIf="tipoIdentificacion === 'nit'">
+            <ion-label position="floating">Razón Social</ion-label>
+            <ion-input [(ngModel)]="razonSocial"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="floating">Teléfono</ion-label>
+            <ion-input type="number" [(ngModel)]="telefono"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="floating">Dirección</ion-label>
+            <ion-input [(ngModel)]="direccion"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="floating">Ciudad</ion-label>
+            <ion-input [(ngModel)]="ciudad"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="floating">Departamento</ion-label>
+            <ion-input [(ngModel)]="departamento"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="floating">Correo Electrónico</ion-label>
+            <ion-input [(ngModel)]="email"></ion-input>
+          </ion-item>
+
+          <ion-button expand="block" (click)="crearCliente()">Crear Cliente</ion-button>
+
+        </ion-col>
+        <ion-col size="2"></ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="clienteEncontrado">
+        <ion-col *ngIf="cliente.tipoId === 'nit'">
+          <ion-item>
+            <ion-label position="floating">Razón Social</ion-label>
+            <ion-input [value]="cliente.razonSocial" readonly></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col *ngIf="cliente.tipoId === 'nit'">
+          <ion-item>
+            <ion-label position="floating">NIT</ion-label>
+            <ion-input [value]="cliente.numeroId" readonly></ion-input>
+          </ion-item>
+        </ion-col>
+
+        <ion-col *ngIf="cliente.tipoId === 'cc'">
+          <ion-item>
+            <ion-label position="floating">Nombre</ion-label>
+            <ion-input value="{{ cliente.primerNombre }} {{ cliente.segundoNombre }} {{ cliente.apellidos }}" readonly>
+            </ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col *ngIf="cliente.tipoId === 'cc'">
+          <ion-item>
+            <ion-label position="floating">Cédula</ion-label>
+            <ion-input [value]="cliente.numeroId" readonly></ion-input>
+          </ion-item>
+        </ion-col>
+
+        <ion-col *ngIf="cliente.tipoId === 'cc' && cliente.nombreComercial">
+          <ion-item>
+            <ion-label position="floating">Nombre Comercial</ion-label>
+            <ion-input [value]="cliente.nombreComercial" readonly></ion-input>
+          </ion-item>
+        </ion-col>
+
+      </ion-row>
+
+      <ion-row *ngIf="mostrarProductos">
+        <ion-col size="8">
+
+          <ion-row>
+            <ion-col>
+              <ion-row *ngIf="productosCompra.length > 0">
+                <ion-col size="1">
+                  <h4 text-center></h4>
+                </ion-col>
+                <ion-col size="6">
+                  <h4 text-left>Nombre</h4>
+                </ion-col>
+                <ion-col size="2">
+                  <h4 text-center>Cant.</h4>
+                </ion-col>
+                <ion-col size="2">
+                  <h4 text-center>Valor</h4>
+                </ion-col>
+                <ion-col size="1">
+
+                </ion-col>
+              </ion-row>
+              <ion-row *ngFor="let producto of productosCompra; let i = index" align-items-center>
+                <ion-col size="1">
+                  <ion-thumbnail>
+                    <img src="{{apiProvider.urlApi}}/images/{{producto.productoId}}.png">
+                  </ion-thumbnail>
+                </ion-col>
+                <ion-col size="6">
+                  <p><strong>{{ producto.referencia }}</strong> - {{ producto.nombre }}</p>
+                </ion-col>
+                <ion-col size="2">
+                  <ion-item>
+                    <ion-input type="number" (keyup.enter)="actualizar($event)" (ionBlur)="actualizar($event)"
+                      [(ngModel)]="producto.cantidad" [ngModelOptions]="{standalone: true}"></ion-input>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="2">
+                  <ion-item>
+                    <ion-input type="number" (keyup.enter)="actualizar($event)" (ionBlur)="actualizar($event)"
+                      [(ngModel)]="producto.valorVenta" [ngModelOptions]="{standalone: true}"></ion-input>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="1">
+                  <ion-button color="danger" (click)="eliminarProducto(i)">
+                    <ion-icon slot="icon-only" name="trash"></ion-icon>
+                  </ion-button>
+                </ion-col>
+              </ion-row>
+            </ion-col>
+          </ion-row>
+
+        </ion-col>
+        <ion-col size="4">
+          <ion-item>
+            <ion-select placeholder="Elegir" [(ngModel)]="tipoBusqueda">
+              <ion-select-option value="Producto">Producto</ion-select-option>
+              <ion-select-option value="Repuesto">Repuesto</ion-select-option>
+            </ion-select>
+            <ion-input [(ngModel)]="queryBusqueda"></ion-input>
+          </ion-item>
+          <ion-button expand="block" (click)="buscarProductos()">Buscar</ion-button>
+          <ion-list *ngIf="productosFiltrados.length > 0">
+            <ion-item *ngFor="let producto of productosFiltrados; let i = index" (click)="elegirProducto(i)">
+              <ion-thumbnail slot="start">
+                <img src="{{apiProvider.urlApi}}/images/{{producto._id}}.png">
+              </ion-thumbnail>
+              <p><strong>{{ producto.caracteristicas.referencia }}</strong> {{ producto.nombre }}</p>
+            </ion-item>
+          </ion-list>
+
+          <ion-row *ngIf="total > 0">
+              <ion-col>
+
+                  <ion-item>
+                      <ion-label>Método de Pago</ion-label>
+                      <ion-select placeholder="Select One">
+                        <ion-select-option value="efectivo">Efectivo</ion-select-option>
+                        <ion-select-option value="debito">Tarjeta de Crédito</ion-select-option>
+                        <ion-select-option value="credito">Tarjeta Débito</ion-select-option>
+                      </ion-select>
+                    </ion-item>
+
+                <ion-button expand="block" (click)="guardarOrden()">
+                  GUARDAR ORDEN
+                </ion-button>
+              </ion-col>
+            </ion-row>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="total > 0">
+        <ion-col size="4"></ion-col>
+        <ion-col size="2">
+          <h3>Total</h3>
+        </ion-col>
+        <ion-col size="2">
+          <h3>{{ total }}</h3>
+        </ion-col>
+        <ion-col size="4"></ion-col>
+      </ion-row>
+
+      <!-- <ion-row *ngIf="total > 0">
+        <ion-col size="8">
+          <ion-button expand="block" (click)="guardarOrden()">
+            GUARDAR ORDEN
+          </ion-button>
+        </ion-col>
+        <ion-col size="4"></ion-col>
+      </ion-row> -->
+
+    </ion-grid>
+
+    <ion-grid *ngIf="servicio">
+      <h3>SERVICIO</h3>
+
+      <ion-row>
+        <ion-col size="2"></ion-col>
+        <ion-col size="8">
+          <ion-item>
+            <ion-label>Tipo</ion-label>
+            <ion-select placeholder="Elegir" [(ngModel)]="tipoServicio">
+              <ion-select-option value="Producto">Revisión</ion-select-option>
+              <ion-select-option value="Repuesto">Reparación</ion-select-option>
+              <ion-select-option value="Repuesto">Garantía</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="2"></ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="2"></ion-col>
+        <ion-col size="6">
+          <ion-item>
+            <ion-label position="floating">Producto</ion-label>
+            <ion-input [(ngModel)]="queryBusquedaProdServ"></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col size="2">
+          <ion-button expand="block" (click)="buscarProductosServicio('Producto')">Buscar</ion-button>
+        </ion-col>
+        <ion-col size="2"></ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="2"></ion-col>
+        <ion-col size="8">
+          <ion-list *ngIf="productosFiltrados.length > 0">
+            <ion-item *ngFor="let producto of productosFiltrados; let i = index" (click)="elegirProducto(i)">
+              <ion-thumbnail slot="start">
+                <img src="{{apiProvider.urlApi}}/images/{{producto._id}}.png">
+              </ion-thumbnail>
+              <p><strong>{{ producto.caracteristicas.referencia }}</strong> {{ producto.nombre }}</p>
+            </ion-item>
+          </ion-list>
+        </ion-col>
+        <ion-col size="2"></ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="2"></ion-col>
+        <ion-col size="6">
+          <ion-item>
+            <ion-label position="floating">Cliente</ion-label>
+            <ion-input></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col size="2">
+          <ion-button expand="block">Buscar</ion-button>
+        </ion-col>
+        <ion-col size="2"></ion-col>
+      </ion-row>
+
+
+    </ion-grid>
+
+
+  </div>
+</ion-content>
